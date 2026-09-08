@@ -63,6 +63,52 @@ function t(key) {
   const pack = STR[ui.lang] || STR.en;
   return pack[key] ?? STR.en[key] ?? key;
 }
+
+const PRESET_LABELS = {
+  "Kavárna Luka": { cs: "Kavárna Luka", en: "Café Luka" },
+  "Obchod Luka": { cs: "Obchod Luka", en: "Shop Luka" },
+  Kavárna: { cs: "Kavárna", en: "Café" },
+  Obchod: { cs: "Obchod", en: "Shop" },
+  Barista: { cs: "Barista", en: "Barista" },
+  "Kuchyně": { cs: "Kuchyně", en: "Kitchen" },
+  "Sál": { cs: "Sál", en: "Floor" },
+  Pokladna: { cs: "Pokladna", en: "Till" },
+  "Vedoucí": { cs: "Vedoucí", en: "Supervisor" },
+  Prodejna: { cs: "Prodejna", en: "Floor" },
+  "Rodinná oslava v pondělí ráno.": { cs: "Rodinná oslava v pondělí ráno.", en: "Family celebration Monday morning." },
+  "Lékař v úterý dopoledne, Petrovu směnu zvládnu.": {
+    cs: "Lékař v úterý dopoledne, Petrovu směnu zvládnu.",
+    en: "Doctor on Tuesday morning — I can cover Petr's shift.",
+  },
+  "Potřebuju to úterý volné.": { cs: "Potřebuju to úterý volné.", en: "I need Tuesday off." },
+};
+
+function presetLabel(raw) {
+  const key = String(raw ?? "").trim();
+  const pair = PRESET_LABELS[key];
+  if (!pair) return key;
+  return pair[ui.lang] || key;
+}
+
+function presetKeep(stored, submitted) {
+  const next = String(submitted ?? "").trim();
+  const pair = PRESET_LABELS[String(stored ?? "").trim()];
+  if (!pair) return next;
+  if (next === pair.cs || next === pair.en) return stored;
+  return next;
+}
+
+function resolveStoredRole(submitted) {
+  const next = String(submitted ?? "").trim();
+  if (!next) return next;
+  const roles = ui.data?.roles || [];
+  const exact = roles.find((r) => r.name === next);
+  if (exact) return exact.name;
+  const labeled = roles.find((r) => presetLabel(r.name) === next);
+  if (labeled) return labeled.name;
+  const key = Object.keys(PRESET_LABELS).find((name) => PRESET_LABELS[name].cs === next || PRESET_LABELS[name].en === next);
+  return key || next;
+}
 function err(code) {
   const pack = STR[ui.lang] || STR.en;
   return pack.errors[code] || STR.en.errors[code] || code;
@@ -257,7 +303,7 @@ function personHasRole(p, shiftRole) {
 function rolePills(p) {
   const roles = personRoles(p);
   if (!roles.length) return "";
-  return `<span class="role-pills">${roles.map((r) => `<span class="person-role${roleGrantsAccess(r) ? " elevated" : ""}">${esc(r)}</span>`).join("")}</span>`;
+  return `<span class="role-pills">${roles.map((r) => `<span class="person-role${roleGrantsAccess(r) ? " elevated" : ""}">${esc(presetLabel(r))}</span>`).join("")}</span>`;
 }
 function roleGrantsAccess(roleName) {
   return Boolean((ui.data?.roles || []).find((r) => r.name === roleName)?.elevated);
@@ -330,7 +376,7 @@ async function flushNotices(payload) {
   if (!kicked.length) return;
   const names = [...new Set(kicked.map((n) => n.shopName).filter(Boolean))];
   const msg = names.length
-    ? t("kickedFrom").replace("SHOP", names.join(", "))
+        ? t("kickedFrom").replace("SHOP", names.map((n) => presetLabel(n)).join(", "))
     : t("kickedOut");
   showToast(msg);
 }
@@ -712,14 +758,14 @@ function readSetupDraft() {
 function roleChips(selected) {
   const roles = rolesNow();
   if (!roles.length) return "";
-  return `<div class="chips">${roles.map((r) => `<button type="button" data-act="preset-role" data-role="${esc(r)}" class="${selected === r ? "on" : ""}">${esc(r)}</button>`).join("")}</div>`;
+  return `<div class="chips">${roles.map((r) => `<button type="button" data-act="preset-role" data-role="${esc(r)}" class="${selected === r ? "on" : ""}">${esc(presetLabel(r))}</button>`).join("")}</div>`;
 }
 function personRoleChips(selected) {
   const picked = Array.isArray(selected) ? selected : selected ? [selected] : [];
   const catalog = rolesNow();
   const extra = picked.filter((r) => !catalog.some((c) => c.toLowerCase() === r.toLowerCase()));
   const roles = [...catalog, ...extra];
-  return `<div class="chips">${roles.map((r) => `<button type="button" data-act="toggle-person-role" data-role="${esc(r)}" class="${picked.some((p) => p.toLowerCase() === r.toLowerCase()) ? "on" : ""}">${esc(r)}</button>`).join("")}</div>
+  return `<div class="chips">${roles.map((r) => `<button type="button" data-act="toggle-person-role" data-role="${esc(r)}" class="${picked.some((p) => p.toLowerCase() === r.toLowerCase()) ? "on" : ""}">${esc(presetLabel(r))}</button>`).join("")}</div>
     <input type="hidden" name="roles" value="${esc(picked.join("|"))}" />`;
 }
 
@@ -748,7 +794,7 @@ function addPersonRoleChip(form, name) {
     btn.type = "button";
     btn.dataset.act = "toggle-person-role";
     btn.dataset.role = name;
-    btn.textContent = name;
+    btn.textContent = presetLabel(name);
     chips.appendChild(btn);
   }
   btn.classList.add("on");
@@ -763,7 +809,7 @@ function hoursCapOn() {
 function shopTypeLabel(shop = ui.data?.shop) {
   if (!shop) return "";
   const cat = (ui.data?.categories || []).find((c) => c.id === shop.categoryId);
-  if (cat?.name) return cat.name;
+  if (cat?.name) return presetLabel(cat.name);
   return t(KIND_I18N[shop.kind] || "kindCafe");
 }
 
@@ -889,10 +935,10 @@ function viewPicker() {
     </div>
     ${ui.error ? `<p class="error">${esc(err(ui.error))}</p>` : ""}
     ${shops.length ? `<div class="who-list">${shops.map((s) => `<button class="who-btn" data-act="open-shop" data-id="${esc(s.id)}">
-      <b>${esc(s.name)}</b>
-      <span class="role-preview">${esc(t(KIND_I18N[s.kind] || "kindCafe"))}${s.isOwner || s.role ? ` · ${esc(s.isOwner ? t("owner") : s.role)}` : ""}</span>
+      <b>${esc(presetLabel(s.name))}</b>
+      <span class="role-preview">${esc(t(KIND_I18N[s.kind] || "kindCafe"))}${s.isOwner || s.role ? ` · ${esc(s.isOwner ? t("owner") : presetLabel(s.role))}` : ""}</span>
     </button>`).join("")}</div>` : `<p class="lede">${esc(t("noShopsYet"))}</p>`}
-    ${waiting.length ? `<p class="lede">${esc(t("joinWaiting"))}</p><div class="who-list">${waiting.map((j) => `<div class="who-btn"><b>${esc(j.shopName)}</b><span class="role-preview">${esc(t("pending"))}</span></div>`).join("")}</div>` : ""}
+    ${waiting.length ? `<p class="lede">${esc(t("joinWaiting"))}</p><div class="who-list">${waiting.map((j) => `<div class="who-btn"><b>${esc(presetLabel(j.shopName))}</b><span class="role-preview">${esc(t("pending"))}</span></div>`).join("")}</div>` : ""}
     <form class="form" data-form="join">
       <label><span>${esc(t("enterCode"))}</span><input name="code" required maxlength="8" placeholder="${esc(t("joinCode"))}" style="text-transform:uppercase" /></label>
       <button class="ghost" type="submit">${esc(t("joinShop"))}</button>
@@ -957,13 +1003,13 @@ function shiftCard(s) {
       ${s.offered ? `<span class="badge">${esc(t("offered"))}</span>` : ""}
     </span>
     <span class="who">${esc(who?.name || t("openSlot"))}</span>
-    <span class="job">${esc(s.role)}</span>
+    <span class="job">${esc(presetLabel(s.role))}</span>
   </button>`;
 }
 
 function monthChip(s) {
   const who = personById(s.personId);
-  return `<button class="m-shift ${shiftClasses(s)}" data-act="open-shift" data-id="${esc(s.id)}" title="${esc(`${s.start}–${s.end} ${s.role} · ${who?.name || ""}`)}">
+  return `<button class="m-shift ${shiftClasses(s)}" data-act="open-shift" data-id="${esc(s.id)}" title="${esc(`${s.start}–${s.end} ${presetLabel(s.role)} · ${who?.name || ""}`)}">
     <span class="m-time">${esc(s.start.slice(0, 5))}</span>
     <span class="m-who">${esc(shortName(who?.name) || t("openSlot"))}</span>
   </button>`;
@@ -1117,15 +1163,15 @@ function viewQueue() {
       const sh = sw.shift;
       const offerer = personById(sw.offeredBy);
       const claimer = personById(sw.claimedBy);
-      const label = sh ? `${sh.date} ${sh.start}–${sh.end} ${sh.role}` : t("shift");
+      const label = sh ? `${sh.date} ${sh.start}–${sh.end} ${presetLabel(sh.role)}` : t("shift");
       const h3 = !sh?.personId
         ? `${esc(claimer?.name || "")} ${esc(t("wantsOpen"))}`
         : `${esc(claimer?.name || "")} ${esc(t("swapWith"))} ${esc(offerer?.name || "")}`;
       return `<article class="queue-card">
         <h3>${h3}</h3>
         <p>${esc(label)}</p>
-        ${sw.reason ? `<p class="note">${esc(t("reason"))}: ${esc(sw.reason)}</p>` : ""}
-        ${sw.offerReason ? `<p class="meta">${esc(t("offered"))}: ${esc(sw.offerReason)}</p>` : ""}
+        ${sw.reason ? `<p class="note">${esc(t("reason"))}: ${esc(presetLabel(sw.reason))}</p>` : ""}
+        ${sw.offerReason ? `<p class="meta">${esc(t("offered"))}: ${esc(presetLabel(sw.offerReason))}</p>` : ""}
         <div class="row-2">
           <button class="primary" data-act="approve" data-id="${esc(sw.id)}">${esc(t("approve"))}</button>
           <button class="danger" data-act="reject" data-id="${esc(sw.id)}">${esc(t("reject"))}</button>
@@ -1339,7 +1385,7 @@ function manageShopCards() {
     <section class="card">
       <h2>${esc(t("shopName"))}</h2>
       <form class="form" data-form="shop-name">
-        <input name="name" required maxlength="60" value="${esc(ui.data.shop.name)}" />
+        <input name="name" required maxlength="60" value="${esc(presetLabel(ui.data.shop.name))}" />
         <button class="commit" type="submit">${esc(t("save"))}</button>
       </form>
     </section>
@@ -1349,7 +1395,7 @@ function manageShopCards() {
       ${kindChips(currentKind, "shop-kind")}
       <p class="lede-label">${esc(t("customType"))}</p>
       ${cats.map((c) => `<form class="form cat-row" data-form="edit-cat" data-id="${esc(c.id)}">
-        <input name="name" required maxlength="40" value="${esc(c.name)}" />
+        <input name="name" required maxlength="40" value="${esc(presetLabel(c.name))}" />
         <div class="cat-actions">
           <button class="${c.id === currentCat ? "primary" : "ghost"}" type="button" data-act="use-cat" data-id="${esc(c.id)}">${esc(c.id === currentCat ? t("useType") : t("pickType"))}</button>
           <button class="ghost" type="submit">${esc(t("save"))}</button>
@@ -1365,7 +1411,7 @@ function manageRolesCards() {
       <h2>${esc(t("roles"))}</h2>
       <p class="hint">${esc(t("elevatedHint"))}</p>
       ${roles.map((r) => `<form class="form role-form" data-form="edit-role" data-id="${esc(r.id)}">
-        <input name="name" required value="${esc(r.name)}" />
+        <input name="name" required value="${esc(presetLabel(r.name))}" />
         <input type="hidden" name="elevated" value="${r.elevated ? "1" : ""}" />
         ${toggleControl(Boolean(r.elevated), "role-access", t("elevated"), `data-id="${esc(r.id)}"`)}
         <div class="row-2">
@@ -1446,19 +1492,19 @@ function shiftActions(shift) {
     </form>`;
   }
   if (mine && shift.offered && !pending) {
-    return `${open?.offerReason ? `<p class="note">${esc(t("reason"))}: ${esc(open.offerReason)}</p>` : ""}
+    return `${open?.offerReason ? `<p class="note">${esc(t("reason"))}: ${esc(presetLabel(open.offerReason))}</p>` : ""}
       <button class="ghost" data-act="cancel-offer" data-id="${esc(shift.id)}">${esc(t("cancelOffer"))}</button>`;
   }
   if (!mine && shift.offered && !pending) {
     return `${claimLead}
-      ${open?.offerReason ? `<p class="meta">${esc(t("offered"))}: ${esc(open.offerReason)}</p>` : ""}
+      ${open?.offerReason ? `<p class="meta">${esc(t("offered"))}: ${esc(presetLabel(open.offerReason))}</p>` : ""}
       <form class="form" data-form="claim-shift" data-id="${esc(shift.id)}">
         <button class="primary" type="submit">${esc(t("claim"))}</button>
       </form>`;
   }
   if (pending) {
     return `<p class="note warn">${esc(t("pending"))}</p>
-      ${open?.reason ? `<p class="note">${esc(t("reason"))}: ${esc(open.reason)}</p>` : ""}`;
+      ${open?.reason ? `<p class="note">${esc(t("reason"))}: ${esc(presetLabel(open.reason))}</p>` : ""}`;
   }
   return "";
 }
@@ -1472,14 +1518,14 @@ function shiftDetail(shift) {
     [t("start"), esc(shift.start)],
     [t("end"), esc(shift.end)],
     [t("duration"), `${esc(fmtHours(shift.hours))} ${esc(t("h"))}`],
-    [t("role"), `<span class="person-role">${esc(shift.role)}</span>`],
+    [t("role"), `<span class="person-role">${esc(presetLabel(shift.role))}</span>`],
     [t("assigned"), esc(who?.name || t("openSlot"))],
     ...(who && hoursCapOn() ? [[t("hoursWeek"), `${fmtHours(used)} / ${fmtHours(who.maxHours)} ${esc(t("h"))}`]] : []),
     [t("status"), esc(shiftStatus(shift, open))],
   ];
   let extra = "";
-  if (open?.offerReason) extra += `<p class="note">${esc(t("offerReason"))}: ${esc(open.offerReason)}</p>`;
-  if (open?.reason) extra += `<p class="note">${esc(t("claimReason"))}: ${esc(open.reason)}</p>`;
+  if (open?.offerReason) extra += `<p class="note">${esc(t("offerReason"))}: ${esc(presetLabel(open.offerReason))}</p>`;
+  if (open?.reason) extra += `<p class="note">${esc(t("claimReason"))}: ${esc(presetLabel(open.reason))}</p>`;
   return `<dl class="detail">${rows.map(([k, v]) => `<div class="detail-row"><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}</dl>${extra}`;
 }
 
@@ -1492,7 +1538,7 @@ function shiftEditForm(shift) {
       <label><span>${esc(t("start"))}</span><input name="start" type="time" value="${esc(shift.start)}" required /></label>
       <label><span>${esc(t("end"))}</span><input name="end" type="time" value="${esc(shift.end)}" required /></label>
     </div>
-    <label><span>${esc(t("role"))}</span><input name="role" value="${esc(shift.role)}" required /></label>
+    <label><span>${esc(t("role"))}</span><input name="role" value="${esc(presetLabel(shift.role))}" required /></label>
     ${roleChips(shift.role)}
     <label><span>${esc(t("assigned"))}</span>
       <select name="personId">
@@ -1712,7 +1758,7 @@ function sidebar() {
   return `<aside class="sidebar">
     <div class="brand">
       <p class="kicker">${esc(t("app"))}</p>
-      <h1>${esc(ui.data.shop.name)}</h1>
+      <h1>${esc(presetLabel(ui.data.shop.name))}</h1>
       <p class="shop-type">${esc(shopTypeLabel())}</p>
       <button type="button" class="ghost shop-switch-btn" data-act="picker">${esc(t("switchShop"))}</button>
     </div>
@@ -2152,7 +2198,7 @@ async function handle(action, target) {
     }
     if (action === "preset-role") {
       const form = target.closest("form");
-      form.role.value = target.dataset.role;
+      form.role.value = presetLabel(target.dataset.role);
       form.querySelectorAll("[data-act='preset-role']").forEach((btn) => btn.classList.toggle("on", btn.dataset.role === target.dataset.role));
       return;
     }
@@ -2425,7 +2471,7 @@ app.addEventListener("submit", async (event) => {
         });
         if (!(await confirmClashes(clashData.clashes))) return;
       }
-      ui.data = await api(`/api/shifts?week=${ui.week}`, { method: "POST", body: { ...body, copyDates } });
+      ui.data = await api(`/api/shifts?week=${ui.week}`, { method: "POST", body: { ...body, copyDates, role: resolveStoredRole(body.role) } });
       ui.sheet = { type: "add-shift" };
       showToast(t("addShift"));
       return;
@@ -2458,7 +2504,7 @@ app.addEventListener("submit", async (event) => {
         });
         if (!(await confirmClashes(clashData.clashes))) return;
       }
-      ui.data = await api(`/api/shifts/${form.dataset.id}`, { method: "PATCH", body });
+      ui.data = await api(`/api/shifts/${form.dataset.id}`, { method: "PATCH", body: { ...body, role: resolveStoredRole(body.role) } });
       const shift = ui.data.shifts.find((s) => s.id === form.dataset.id);
       ui.sheet = shift ? { type: "shift", shift, mode: "view" } : null;
       if (body.date) {
@@ -2471,7 +2517,7 @@ app.addEventListener("submit", async (event) => {
     if (form.dataset.form === "approve-join") {
       ui.data = await api(`/api/join-requests/${form.dataset.join}/approve`, {
         method: "POST",
-        body: { ...body, elevated: Boolean(body.elevated) },
+        body: { ...body, elevated: Boolean(body.elevated), roles: String(body.roles || "").split("|").map(resolveStoredRole).filter(Boolean).join("|") },
       });
       ui.sheet = null;
       showToast(t("approve"));
@@ -2487,7 +2533,7 @@ app.addEventListener("submit", async (event) => {
       return;
     }
     if (form.dataset.form === "add-person") {
-      ui.data = await api("/api/people", { method: "POST", body: { ...body, elevated: Boolean(body.elevated) } });
+      ui.data = await api("/api/people", { method: "POST", body: { ...body, elevated: Boolean(body.elevated), roles: String(body.roles || "").split("|").map(resolveStoredRole).filter(Boolean).join("|") } });
       ui.sheet = null;
       ui.tab = "people";
       if (String(body.email || "").trim()) showToast(t("inviteToast"));
@@ -2495,18 +2541,22 @@ app.addEventListener("submit", async (event) => {
       return;
     }
     if (form.dataset.form === "edit-person") {
-      ui.data = await api(`/api/people/${form.dataset.id}`, { method: "PATCH", body: { ...body, elevated: Boolean(body.elevated) } });
+      ui.data = await api(`/api/people/${form.dataset.id}`, { method: "PATCH", body: { ...body, elevated: Boolean(body.elevated), roles: String(body.roles || "").split("|").map(resolveStoredRole).filter(Boolean).join("|") } });
       ui.sheet = null;
       render();
       return;
     }
     if (form.dataset.form === "shop-name") {
-      ui.data = await api("/api/shop", { method: "PATCH", body: { name: body.name } });
+      ui.data = await api("/api/shop", { method: "PATCH", body: { name: presetKeep(ui.data.shop.name, body.name) } });
       render();
       return;
     }
     if (form.dataset.form === "edit-cat") {
-      ui.data = await api(`/api/categories/${form.dataset.id}`, { method: "PATCH", body: { name: body.name } });
+      const cat = (ui.data.categories || []).find((c) => c.id === form.dataset.id);
+      ui.data = await api(`/api/categories/${form.dataset.id}`, {
+        method: "PATCH",
+        body: { name: presetKeep(cat?.name, body.name) },
+      });
       render();
       return;
     }
@@ -2517,9 +2567,10 @@ app.addEventListener("submit", async (event) => {
       return;
     }
     if (form.dataset.form === "edit-role") {
+      const role = (ui.data.roles || []).find((r) => r.id === form.dataset.id);
       ui.data = await api(`/api/roles/${form.dataset.id}`, {
         method: "PATCH",
-        body: { name: body.name, elevated: Boolean(body.elevated) },
+        body: { name: presetKeep(role?.name, body.name), elevated: Boolean(body.elevated) },
       });
       render();
     }

@@ -6,7 +6,9 @@ This repository is a representative snapshot for review. It is not the developme
 
 ## What you can try
 
-You land as **Luka Majitel**, owner of **Kavárna Luka**. The demo already includes a week of shifts, an open offer, a pending swap, and a join request. You also belong to a second shop, **Obchod Luka**, so you can switch shops in the sidebar.
+You land as **Luka Majitel**, owner of **Café Luka** / **Kavárna Luka**. The demo already includes a week of shifts, an open offer, a pending swap, and a join request. You also belong to a second shop, **Shop Luka** / **Obchod Luka**.
+
+Switch CS / EN in the sidebar. Shop names, job roles, and the original demo notes follow the interface language. If you rename a shop, role, or type, that custom name stays as you typed it — only the original preset is translated.
 
 From there you can:
 
