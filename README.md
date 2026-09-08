@@ -1,18 +1,12 @@
 # SWAPSHIFT preview
 
-A live demo of **SWAPSHIFT** — a small shift-swap app for cafés, shops, and similar teams. People offer a shift, someone claims it, and shop rules decide whether it goes through or waits for the owner.
+A public demo of **SWAPSHIFT** — a shift-swap app for cafés, shops, and similar teams. Staff offer a shift, a teammate claims it, and shop rules decide whether it goes through or waits for the owner.
 
-This is **not the real product repo**. It is a public snapshot so you can click around without signing up.
-
-## Not done — I'm building this for fun
-
-The app is early. Layout, copy, and rules will change. There are rough edges. I'm making it because I want a simple way for a team to trade shifts without a spreadsheet, not because it's finished.
-
-Please treat this site as a playground, not a service.
+This repository is a representative snapshot for review. It is not the development repo.
 
 ## What you can try
 
-You land as **Luka Majitel**, owner of **Kavárna Luka** (a Czech café). There is already a week of shifts, an open offer, a pending swap, and a join request. You also belong to a second shop, **Obchod Luka**, so you can switch shops in the sidebar.
+You land as **Luka Majitel**, owner of **Kavárna Luka**. The demo already includes a week of shifts, an open offer, a pending swap, and a join request. You also belong to a second shop, **Obchod Luka**, so you can switch shops in the sidebar.
 
 From there you can:
 
@@ -24,11 +18,9 @@ From there you can:
 ## How this preview works
 
 - **No login.** Opening the site signs you in as the demo owner automatically.
-- **Same starting point for everyone.** Each visit gets a fresh in-memory copy of the demo café. Nothing is written to disk.
-- **Refresh resets.** Reload the page and the café goes back to the beginning. Edits from this visit are gone.
-- **You don't affect other people.** Your clicks live in your browser session only. Someone else opening the preview still sees the original demo, not your experiments.
-
-A short banner in the app repeats this so nobody thinks their schedule is saved.
+- **Same starting point for everyone.** Each visit gets a fresh in-memory copy of the demo café.
+- **Refresh of the site will reset everything to the original preset.** Changes from that visit are discarded.
+- Visitors do not share data. Someone else opening the preview still sees the original demo.
 
 ## Run it locally
 

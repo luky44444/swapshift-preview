@@ -2,7 +2,7 @@ const STR = {
   en: {
     app: "SWAPSHIFT",
     tagline: "Offer. Claim. Rules. Done.",
-    previewBanner: "Preview — not finished, I'm building this for fun. Refresh resets to the starting café. Your clicks stay on this visit only and don't affect anyone else.",
+    previewBanner: "Preview. Refresh of the site will reset everything to the original preset.",
     setupTitle: "Set up this place",
     setupHint: "One location. You run it. Staff join with the shop code.",
     welcomeTitle: "Welcome",
@@ -250,7 +250,7 @@ const STR = {
   cs: {
     app: "SWAPSHIFT",
     tagline: "Nabídni. Vezmi. Pravidla. Hotovo.",
-    previewBanner: "Náhled — ještě to není hotové, stavím to pro radost. Obnovení stránky vrátí výchozí kavárnu. Změny platí jen pro tuhle návštěvu a nikoho jiného neovlivní.",
+    previewBanner: "Náhled. Obnovení stránky vrátí vše na původní výchozí stav.",
     setupTitle: "Založ provozovnu",
     setupHint: "Jedna provozovna. Ty to vedeš. Lidi se přidají kódem.",
     welcomeTitle: "Vítej",

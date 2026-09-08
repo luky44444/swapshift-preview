@@ -1716,7 +1716,7 @@ function sidebar() {
       <p class="shop-type">${esc(shopTypeLabel())}</p>
       <button type="button" class="ghost shop-switch-btn" data-act="picker">${esc(t("switchShop"))}</button>
     </div>
-    ${sidebarNav()}
+    <div class="sidebar-nav">${sidebarNav()}</div>
     <div class="sidebar-foot">
       ${signedInBlock()}
       ${langToggle()}
