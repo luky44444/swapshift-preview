@@ -10,8 +10,11 @@ const TTL_MS = 45 * 60 * 1000;
 const sandboxes = new Map();
 
 export function previewIdFrom(req) {
-  const header = req.headers.cookie ?? "";
-  for (const part of header.split(";")) {
+  return previewIdFromCookieHeader(req.headers.cookie ?? "");
+}
+
+export function previewIdFromCookieHeader(header) {
+  for (const part of String(header ?? "").split(";")) {
     const [key, ...rest] = part.trim().split("=");
     if (key === PREVIEW_COOKIE) return rest.join("=").trim();
   }
@@ -51,9 +54,8 @@ function evict() {
   }
 }
 
-async function seedBox() {
-  const db = openDb(":memory:");
-  const session = await runWithDb(db, async () => {
+export async function seedPreview(database) {
+  return runWithDb(database, async () => {
     await seedWorld();
     const owner = previewOwnerUser();
     if (!owner) throw new Error("preview owner missing");
@@ -62,6 +64,11 @@ async function seedBox() {
     insertSession(token, owner.id, { shopId, remember: false });
     return { token, userId: owner.id, shopId };
   });
+}
+
+async function seedBox() {
+  const db = openDb(":memory:");
+  const session = await seedPreview(db);
   return { db, ...session };
 }
 

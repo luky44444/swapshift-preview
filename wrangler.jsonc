@@ -3,19 +3,21 @@
   "name": "swapshift-preview",
   "main": "worker.js",
   "compatibility_date": "2026-09-09",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": false,
   "observability": {
     "enabled": true
   },
-  "containers": [
-    {
-      "class_name": "PreviewApp",
-      "image": "./Dockerfile",
-      "instance_type": "basic",
-      "max_instances": 2
-    }
-  ],
+  "vars": {
+    "NODE_ENV": "production"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
   "durable_objects": {
     "bindings": [
       {

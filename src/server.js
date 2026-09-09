@@ -31,6 +31,7 @@ import {
   personForUserInShop,
   pendingCount,
   regenerateJoinCode,
+  runWithDb,
   runWithShop,
   updatePerson,
   updateSessionShop,
@@ -257,7 +258,7 @@ function resolveShopId(req, user, hinted) {
   return listShopsForUser(user.id)[0]?.id || "";
 }
 
-const server = createServer(async (req, res) => {
+export async function handlePreviewHttp(req, res, injected = null) {
   try {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
     const path = url.pathname;
@@ -275,7 +276,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    await runWithPreview(req, { reset: isShell }, async (box) => {
+    const runSession = async (box) => {
       if (box.fresh) {
         const secure = isHttps(req) ? "; Secure" : "";
         res.__previewCookies = [
@@ -1011,12 +1012,22 @@ const server = createServer(async (req, res) => {
 
       serveStatic(path, res);
     });
-    });
+    };
+
+    if (injected?.box) {
+      await runWithDb(injected.db, () => runSession(injected.box));
+      return;
+    }
+
+    await runWithPreview(req, { reset: isShell }, runSession);
   } catch (error) {
     console.error(error);
     send(res, 500, { error: "server" });
   }
-});
+}
+
+const runningOnWorker = typeof WebSocketPair !== "undefined";
+const server = runningOnWorker ? null : createServer(handlePreviewHttp);
 
 function listen(port, attempt = 0) {
   const onError = (error) => {
@@ -1040,4 +1051,4 @@ function listen(port, attempt = 0) {
   });
 }
 
-listen(PORT);
+if (server) listen(PORT);

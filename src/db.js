@@ -2,7 +2,18 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomInt } from "node:crypto";
-import { DatabaseSync } from "node:sqlite";
+import { DoSqlite } from "./do-sqlite.js";
+
+const DatabaseSync = await loadNodeSqlite();
+
+async function loadNodeSqlite() {
+  try {
+    const spec = "node:" + "sqlite";
+    return (await import(spec)).DatabaseSync;
+  } catch {
+    return null;
+  }
+}
 
 let db;
 let fallbackShopId = null;
@@ -172,12 +183,23 @@ function createSchema(database) {
   `);
 }
 
-export function openDb(path = ":memory:") {
+export function openDb(path = ":memory:", sqlStorage = null) {
+  if (sqlStorage) {
+    const database = new DoSqlite(sqlStorage);
+    prepareOpenedDb(database, true);
+    return database;
+  }
+  if (!DatabaseSync) throw new Error("sqlite backend missing");
   if (path !== ":memory:") {
     mkdirSync(dirname(path), { recursive: true });
   }
   const database = new DatabaseSync(path);
-  if (path !== ":memory:") database.exec("PRAGMA journal_mode = WAL");
+  prepareOpenedDb(database, path === ":memory:");
+  return database;
+}
+
+function prepareOpenedDb(database, memory) {
+  if (!memory) database.exec("PRAGMA journal_mode = WAL");
   database.exec("PRAGMA foreign_keys = ON");
   if (!tableExists(database, "users") || !tableExists(database, "shops")) {
     database.exec("PRAGMA foreign_keys = OFF");
