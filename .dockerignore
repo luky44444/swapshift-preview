@@ -1,0 +1,14 @@
+.git
+.github
+.playwright-cli
+.wrangler
+.data
+docs
+node_modules
+tests
+worker.js
+wrangler.jsonc
+README.md
+*.md
+.gitignore
+.dev.vars

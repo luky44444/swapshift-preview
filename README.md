@@ -4,7 +4,9 @@ A public demo of **SWAPSHIFT** — a shift-swap app for cafés, shops, and simil
 
 This repository is a representative snapshot for review. It is not the development repo.
 
-## What you can try
+## Try it
+
+Open **https://swapshift-preview.lukyniebauer-72e.workers.dev**
 
 You land as **Luka Majitel**, owner of **Café Luka** / **Kavárna Luka**. The demo already includes a week of shifts, an open offer, a pending swap, and a join request. You also belong to a second shop, **Shop Luka** / **Obchod Luka**.
 
@@ -23,19 +25,3 @@ From there you can:
 - **Same starting point for everyone.** Each visit gets a fresh in-memory copy of the demo café.
 - **Refresh of the site will reset everything to the original preset.** Changes from that visit are discarded.
 - Visitors do not share data. Someone else opening the preview still sees the original demo.
-
-## Run it locally
-
-Needs **Node 22+** (`node:sqlite`).
-
-```bash
-npm start
-```
-
-Then open http://127.0.0.1:3000
-
-## Deploy (Railway)
-
-This preview is meant to be hosted on Railway. After it's live, the public URL will go here.
-
-Node 22, `npm start`, no database volume — the demo must stay in memory so refresh can reset.
