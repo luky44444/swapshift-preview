@@ -75,7 +75,7 @@ import {
 
 const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? "0.0.0.0";
-const PUBLIC_DIR = join(import.meta.dirname, "../public");
+const PUBLIC_DIR = join(import.meta.dirname || ".", "../public");
 const REMEMBER_MAX_AGE = 30 * 24 * 60 * 60;
 
 const TYPES = {
