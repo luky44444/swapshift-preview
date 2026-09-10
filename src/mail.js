@@ -21,8 +21,13 @@ async function sendResend({ to, subject, text }) {
   return res.ok;
 }
 
+function runningOnWorker() {
+  return typeof WebSocketPair !== "undefined";
+}
+
 export async function notify({ to, subject, text }) {
   if (!to) return;
+  if (runningOnWorker()) return;
   const line = JSON.stringify({
     at: new Date().toISOString(),
     to,

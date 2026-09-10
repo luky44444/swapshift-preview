@@ -183,9 +183,9 @@ function createSchema(database) {
   `);
 }
 
-export function openDb(path = ":memory:", sqlStorage = null) {
+export function openDb(path = ":memory:", sqlStorage = null, durableStorage = null) {
   if (sqlStorage) {
-    const database = new DoSqlite(sqlStorage);
+    const database = new DoSqlite(sqlStorage, durableStorage);
     prepareOpenedDb(database, true);
     return database;
   }
@@ -840,13 +840,18 @@ export function pendingCount() {
 }
 
 export function withTx(fn) {
-  getDb().exec("BEGIN");
+  const database = getDb();
+  if (typeof database.storage?.transactionSync === "function") {
+    return database.storage.transactionSync(fn);
+  }
+  if (database.noExplicitTx) return fn();
+  database.exec("BEGIN");
   try {
     const result = fn();
-    getDb().exec("COMMIT");
+    database.exec("COMMIT");
     return result;
   } catch (error) {
-    getDb().exec("ROLLBACK");
+    database.exec("ROLLBACK");
     throw error;
   }
 }

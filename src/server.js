@@ -593,6 +593,7 @@ export async function handlePreviewHttp(req, res, injected = null) {
           });
           res.write(`data: ${JSON.stringify({ revision: shopRevision(shopId) })}\n\n`);
           subscribeShop(shopId, res);
+          if (typeof WebSocketPair !== "undefined") res.end();
           return;
         }
 

@@ -1,10 +1,15 @@
+const TX_CONTROL = /^(BEGIN|COMMIT|ROLLBACK|END|SAVEPOINT|RELEASE)\b/i;
+
 export class DoSqlite {
-  constructor(sql) {
+  constructor(sql, storage = null) {
     this.sql = sql;
+    this.storage = storage;
+    this.noExplicitTx = true;
   }
 
   exec(text) {
     for (const statement of splitSql(text)) {
+      if (TX_CONTROL.test(statement)) continue;
       this.sql.exec(statement);
     }
     return this;

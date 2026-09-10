@@ -15,7 +15,7 @@ export class PreviewApp extends DurableObject {
     const url = new URL(request.url);
     const path = url.pathname;
     const isShell = request.method === "GET" && (path === "/" || path === "/index.html");
-    const db = openDb(":memory:", this.ctx.storage.sql);
+    const db = openDb(":memory:", this.ctx.storage.sql, this.ctx.storage);
     const id = this.ctx.id.name || newPreviewId();
     let session = runWithDb(db, () => {
       const owner = previewOwnerUser();
