@@ -262,9 +262,9 @@ function authPayload(user) {
 
 function resolveShopId(req, user, hinted) {
   const header = String(req.headers["x-shop-id"] ?? "").trim();
-  if (header) return personForUserInShop(user.id, header) ? header : "";
+  if (header && personForUserInShop(user.id, header)) return header;
   const hint = String(hinted ?? "").trim();
-  if (hint) return personForUserInShop(user.id, hint) ? hint : "";
+  if (hint && personForUserInShop(user.id, hint)) return hint;
   const session = getSession(sessionToken(req));
   if (session?.shop_id && personForUserInShop(user.id, session.shop_id)) return session.shop_id;
   return listShopsForUser(user.id)[0]?.id || "";
