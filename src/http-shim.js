@@ -10,7 +10,8 @@ export function nodeRequestFrom(request, body) {
       setTimeout() {},
     },
     async *[Symbol.asyncIterator]() {
-      if (body?.byteLength) yield body;
+      const bytes = asBytes(body);
+      if (bytes) yield bytes;
     },
   };
 }
@@ -65,8 +66,17 @@ function joinBody(chunks) {
   return chunks.map(String).join("");
 }
 
+function asBytes(body) {
+  if (!body) return null;
+  if (body instanceof Uint8Array) return body.byteLength ? body : null;
+  if (body instanceof ArrayBuffer) return body.byteLength ? new Uint8Array(body) : null;
+  if (typeof Buffer !== "undefined" && Buffer.isBuffer(body) && body.byteLength) return body;
+  return null;
+}
+
 function asBuffer(chunk) {
   if (typeof chunk === "string") return Buffer.from(chunk);
   if (chunk instanceof Uint8Array) return Buffer.from(chunk);
+  if (chunk instanceof ArrayBuffer) return Buffer.from(new Uint8Array(chunk));
   return Buffer.from(String(chunk));
 }

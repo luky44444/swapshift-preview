@@ -41,7 +41,8 @@ export class PreviewApp extends DurableObject {
       return new Response(page.body, { status: page.status, headers });
     }
 
-    const body = request.method === "GET" || request.method === "HEAD" ? null : await request.arrayBuffer();
+    const raw = request.method === "GET" || request.method === "HEAD" ? null : await request.arrayBuffer();
+    const body = raw && raw.byteLength ? new Uint8Array(raw) : null;
     const req = nodeRequestFrom(request, body);
     const res = nodeResponse();
     await handlePreviewHttp(req, res, { db, box: { id, token: session.token, fresh: false } });

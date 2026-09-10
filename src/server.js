@@ -153,13 +153,25 @@ function clientIp(req) {
 async function readBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  const raw = Buffer.concat(chunks).toString("utf8");
+  const raw = chunks.map(chunkToText).join("");
   if (!raw) return {};
   try {
     return JSON.parse(raw);
   } catch {
     return Object.fromEntries(new URLSearchParams(raw));
   }
+}
+
+function chunkToText(chunk) {
+  if (!chunk) return "";
+  if (typeof chunk === "string") return chunk;
+  if (typeof Buffer !== "undefined") {
+    if (chunk instanceof ArrayBuffer) return Buffer.from(new Uint8Array(chunk)).toString("utf8");
+    return Buffer.from(chunk).toString("utf8");
+  }
+  if (chunk instanceof ArrayBuffer) return new TextDecoder().decode(chunk);
+  if (chunk instanceof Uint8Array) return new TextDecoder().decode(chunk);
+  return String(chunk);
 }
 
 function serveStatic(urlPath, res) {
