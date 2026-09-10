@@ -480,8 +480,8 @@ async function boot() {
     }
     rememberAuth(boot);
     await flushNotices(boot);
-    const preferred = boot.shopId || ui.shopId;
-    if (preferred && ui.shops.some((s) => s.id === preferred)) {
+    const preferred = [boot.shopId, ui.shopId, ui.shops[0]?.id].find((id) => id && ui.shops.some((s) => s.id === id));
+    if (preferred) {
       ui.shopId = preferred;
       if (canStorePrefs()) localStorage.setItem("swapshift-shop", ui.shopId);
       await loadWeek();
